@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Guardian Pro | Smart Blind Cane</title>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<!-- CHART -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- QR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+
+:root{
+    --pink:#ff3f6c;
+    --bg:#f5f5f5;
+    --dark:#3f414d;
+    --light:#9496a5;
+    --success:#038d63;
+    --danger:#fc2779;
+    --white:#ffffff;
+}
+
+/* ====================
+GLOBAL
+==================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,
+    "Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+
+html,body{
+    width:100%;
+    overflow-x:hidden;
+    background:var(--bg);
+    color:var(--dark);
+}
+
+img{
+    max-width:100%;
+    height:auto;
+}
+
+/* ====================
+NAVBAR
+==================== */
+
+.navbar{
+    width:100%;
+    height:55px;
+    background:white;
+    display:flex;
+    align-items:center;
+    padding:0 15px;
+    position:fixed;
+    top:0;
+    z-index:1000;
+    border-bottom:1px solid #eee;
+}
+
+.menu-btn{
+    font-size:22px;
+    cursor:pointer;
+}
+
+.logo{
+    flex:1;
+    text-align:center;
+    font-size:18px;
+    font-weight:900;
+    color:var(--pink);
+    letter-spacing:1px;
+    margin-right:20px;
+}
+
+/* ====================
+SIDE MENU
+==================== */
+
+.side-menu{
+    position:fixed;
+    top:0;
+    left:-100%;
+    width:80%;
+    height:100%;
+    background:white;
+    z-index:1001;
+    transition:0.3s;
+    box-shadow:5px 0 15px rgba(0,0,0,0.1);
+}
+
+.side-menu.open{
+    left:0;
+}
+
+.side-menu a{
+    display:block;
+    padding:16px 20px;
+    text-decoration:none;
+    color:var(--dark);
+    border-bottom:1px solid #f3f3f3;
+    font-weight:600;
+}
+
+/* ====================
+SPLASH
+==================== */
+
+.gate{
+    position:fixed;
+    inset:0;
+    background:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+}
+
+.hidden{
+    display:none !important;
+}
+
+.btn{
+    background:var(--pink);
+    color:white;
+    border:none;
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    margin-top:10px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+/* ====================
+POSTER
+==================== */
+
+.poster-wrapper{
+    margin-top:55px;
+}
+
+.poster{
+    width:100%;
+    height:55vh;
+    max-height:420px;
+    background:linear-gradient(180deg,#fff0f3 0%,white 100%);
+    position:relative;
+    overflow:hidden;
+}
+
+.poster-text{
+    position:absolute;
+    top:20px;
+    width:100%;
+    text-align:center;
+    z-index:10;
+}
+
+.poster-text h2{
+    font-size:30px;
+    color:var(--pink);
+    font-weight:900;
+}
+
+.poster-text p{
+    color:gray;
+    margin-top:5px;
+}
+
+.animated-man{
+    position:absolute;
+    bottom:10px;
+    left:-160px;
+    width:150px;
+    animation:walk 12s linear infinite;
+}
+
+@keyframes walk{
+    0%{left:-160px;}
+    100%{left:110%;}
+}
+
+/* ====================
+CONTENT
+==================== */
+
+.content{
+    padding:12px;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:15px;
+    margin-bottom:12px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+
+.card-title{
+    font-size:12px;
+    font-weight:700;
+    color:gray;
+    margin-bottom:12px;
+    text-transform:uppercase;
+}
+
+/* ====================
+STATUS
+==================== */
+
+.status-box{
+    padding:12px;
+    border-radius:10px;
+    text-align:center;
+    font-size:18px;
+    font-weight:800;
+}
+
+.bg-normal{
+    background:#eef6ff;
+    color:#1e90ff;
+}
+
+.bg-walk{
+    background:#eefbf3;
+    color:var(--success);
+}
+
+.bg-alert{
+    background:#fff0f3;
+    color:var(--danger);
+    animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+    0%{opacity:1;}
+    50%{opacity:0.6;}
+    100%{opacity:1;}
+}
+
+/* ====================
+GRID
+==================== */
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+}
+
+.sensor{
+    background:white;
+    border:1px solid #eee;
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+}
+
+.sensor div{
+    font-size:16px;
+    font-weight:800;
+}
+
+.sensor span{
+    font-size:10px;
+    color:gray;
+}
+
+.sensor-alert{
+    border:1px solid var(--pink);
+    background:#fff0f3;
+}
+
+/* ====================
+MEDICAL
+==================== */
+
+.profile-section{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.profile-img{
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid var(--pink);
+    margin-bottom:10px;
+}
+
+.profile-section h2{
+    color:var(--pink);
+}
+
+.medical-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+}
+
+.info-box{
+    background:#fafafa;
+    border:1px solid #eee;
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+}
+
+.info-box span{
+    color:gray;
+    font-size:11px;
+}
+
+.info-box h3{
+    margin-top:5px;
+    font-size:14px;
+}
+
+/* ====================
+ANALYSIS
+==================== */
+
+.alert-item{
+    background:#fafafa;
+    border:1px solid #eee;
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:14px;
+}
+
+.alert-item span{
+    font-size:11px;
+    color:gray;
+}
+
+/* ====================
+SETTINGS
+==================== */
+
+.settings-row{
+    display:flex;
+    justify-content:space-between;
+    padding:14px 0;
+    border-bottom:1px solid #f1f1f1;
+}
+
+.settings-row strong{
+    color:var(--pink);
+}
+
+/* ====================
+QR
+==================== */
+
+.qr-section{
+    margin-top:25px;
+    text-align:center;
+}
+
+#qrcode{
+    display:flex;
+    justify-content:center;
+    margin:15px 0;
+}
+
+/* ====================
+RESPONSIVE
+==================== */
+
+@media(max-width:768px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .medical-grid{
+        grid-template-columns:1fr;
+    }
+
+    .poster{
+        height:45vh;
+    }
+
+    .poster-text h2{
+        font-size:24px;
+    }
+
+    .animated-man{
+        width:110px;
+    }
+
+    #myChart{
+        height:250px !important;
+    }
+
+}
+
+@media(max-width:480px){
+
+    .logo{
+        font-size:15px;
+    }
+
+    .poster{
+        height:40vh;
+    }
+
+    .poster-text h2{
+        font-size:20px;
+    }
+
+    .profile-img{
+        width:85px;
+        height:85px;
+    }
+
+    .alert-item{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:5px;
+    }
+
+    .settings-row{
+        flex-direction:column;
+        gap:4px;
+    }
+
+}
+
+/* ====================
+HOVER
+==================== */
+
+.card,
+.sensor,
+.info-box{
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-2px);
+}
+
+button:active{
+    transform:scale(0.98);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+
+<div id="gate" class="gate">
+
+<h1 style="color:#ff3f6c;
+margin-bottom:20px;">
+GUARDIAN PRO
+</h1>
+
+<button class="btn"
+style="width:220px;"
+onclick="initApp()">
+
+Open Dashboard
+
+</button>
+
+</div>
+
+<!-- NAVBAR -->
+
+<nav class="navbar">
+
+<div class="menu-btn"
+onclick="toggleMenu()">
+☰
+</div>
+
+<div class="logo">
+GUARDIAN PRO
+</div>
+
+</nav>
+
+<!-- SIDE MENU -->
+
+<div id="drawer"
+class="side-menu">
+
+<div style="padding:20px;
+font-weight:900;
+color:#ff3f6c;
+border-bottom:1px solid #eee;">
+
+GUARDIAN MENU
+
+</div>
+
+<a href="#"
+onclick="showPage('home')">
+🏠 Dashboard
+</a>
+
+<a href="#"
+onclick="showPage('analysis')">
+📊 Analysis
+</a>
+
+<a href="#"
+onclick="showPage('medical')">
+🏥 Medical Profile
+</a>
+
+<a href="#"
+onclick="showPage('settings')">
+⚙️ Cane Settings
+</a>
+
+</div>
+
+<!-- MAIN -->
+
+<div id="main-content"
+class="hidden">
+
+<!-- HOME -->
+
+<div id="home-page"
+class="poster-wrapper">
+
+<div class="poster">
+
+<div class="poster-text">
+
+<h2>Independent.</h2>
+
+<p>
+Live Safety Monitoring Active
+</p>
+
+</div>
+
+<img src="./blind-man-walking-stick-removebg-preview.png"
+class="animated-man">
+
+</div>
+
+<div class="content">
+
+<div class="card">
+
+<div class="card-title">
+Cane Activity
+</div>
+
+<div id="status-box"
+class="status-box bg-normal">
+
+Syncing...
+
+</div>
+
+<div style="text-align:center;
+margin-top:8px;
+font-size:12px;
+color:gray;">
+
+Last Updated:
+<span id="time">
+--:--
+</span>
+
+</div>
+
+</div>
+
+<!-- SENSOR -->
+
+<div class="grid">
+
+<div id="obs-card"
+class="sensor">
+
+<div id="obs-icon">
+Safe
+</div>
+
+<span>Obstacle</span>
+
+</div>
+
+<div id="water-card"
+class="sensor">
+
+<div id="water-icon">
+Dry
+</div>
+
+<span>Water</span>
+
+</div>
+
+<div id="light-card"
+class="sensor">
+
+<div id="light-icon">
+Bright ☀️
+</div>
+
+<span>Light</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ANALYSIS -->
+
+<div id="analysis-page"
+class="content hidden"
+style="margin-top:60px;">
+
+<div class="card">
+
+<div class="card-title">
+Safety Overview
+</div>
+
+<div class="medical-grid">
+
+<div class="info-box">
+<span>Total Walks</span>
+<h3>142</h3>
+</div>
+
+<div class="info-box">
+<span>Obstacle Alerts</span>
+<h3>21</h3>
+</div>
+
+<div class="info-box">
+<span>Water Alerts</span>
+<h3>9</h3>
+</div>
+
+<div class="info-box">
+<span>Fall Events</span>
+<h3>2</h3>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">
+Weekly Analytics
+</div>
+
+<canvas id="myChart"></canvas>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">
+Recent Alerts
+</div>
+
+<div class="alert-item">
+⛔ Obstacle Near Staircase
+<span>10:45 AM</span>
+</div>
+
+<div class="alert-item">
+💧 Wet Surface Detected
+<span>09:10 AM</span>
+</div>
+
+<div class="alert-item">
+🌙 Dark Environment
+<span>Yesterday</span>
+</div>
+
+</div>
+
+<button class="btn"
+onclick="showPage('home')">
+
+Back
+
+</button>
+
+</div>
+
+<!-- MEDICAL -->
+
+<div id="medical-page"
+class="content hidden"
+style="margin-top:60px;">
+
+<div class="card">
+
+<div class="profile-section">
+
+<img src="./vector-blind-man-in-shadow-of-sharp-lines-style-2EPK6D3.jpg"
+class="profile-img">
+
+<h2>
+Mr. Raju
+</h2>
+
+<p style="color:gray;">
+Medical & Emergency Information
+</p>
+
+</div>
+
+<div class="medical-grid">
+
+<div class="info-box">
+<span>Age</span>
+<h3>23</h3>
+</div>
+
+<div class="info-box">
+<span>Blood Group</span>
+<h3>B+</h3>
+</div>
+
+<div class="info-box">
+<span>Hypertension</span>
+<h3>No</h3>
+</div>
+
+<div class="info-box">
+<span>Allergy</span>
+<h3>No Allergy</h3>
+</div>
+
+<div class="info-box">
+<span>Phone</span>
+<h3>+91 98765XXXX</h3>
+</div>
+
+<div class="info-box">
+<span>Emergency</span>
+<h3>+91 91234XXXX</h3>
+</div>
+
+<div class="info-box">
+<span>Aadhaar</span>
+<h3>XXXX XXXX 4589</h3>
+</div>
+
+<div class="info-box">
+<span>Address</span>
+<h3>Dholakpur, Chattisgarh</h3>
+</div>
+
+</div>
+
+<!-- QR -->
+
+<div class="qr-section">
+
+<h3 style="color:#ff3f6c;">
+Emergency QR
+</h3>
+
+<div id="qrcode"></div>
+
+<p style="font-size:12px;
+color:gray;">
+
+Scan for emergency details
+
+</p>
+
+</div>
+
+<button class="btn"
+onclick="showPage('home')">
+
+Back
+
+</button>
+
+</div>
+
+</div>
+
+<!-- SETTINGS -->
+
+<div id="settings-page"
+class="content hidden"
+style="margin-top:60px;">
+
+<div class="card">
+
+<div class="card-title">
+Device Status
+</div>
+
+<div class="medical-grid">
+
+<div class="info-box">
+<span>Battery</span>
+<h3>92%</h3>
+</div>
+
+<div class="info-box">
+<span>ESP32</span>
+<h3>Online</h3>
+</div>
+
+<div class="info-box">
+<span>WiFi Signal</span>
+<h3>Strong</h3>
+</div>
+
+<div class="info-box">
+<span>Bluetooth</span>
+<h3>Connected</h3>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">
+Sensor Diagnostics
+</div>
+
+<div class="medical-grid">
+
+<div class="info-box">
+<span>Ultrasonic</span>
+<h3>Active</h3>
+</div>
+
+<div class="info-box">
+<span>Water Sensor</span>
+<h3>Working</h3>
+</div>
+
+<div class="info-box">
+<span>LDR Sensor</span>
+<h3>Good</h3>
+</div>
+
+<div class="info-box">
+<span>Accelerometer</span>
+<h3>Stable</h3>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">
+System Information
+</div>
+
+<div class="settings-row">
+<span>Firmware Version</span>
+<strong>v2.4.1</strong>
+</div>
+
+<div class="settings-row">
+<span>Cloud Sync</span>
+<strong>Enabled</strong>
+</div>
+
+<div class="settings-row">
+<span>Emergency SOS</span>
+<strong>Active</strong>
+</div>
+
+<div class="settings-row">
+<span>GPS Tracking</span>
+<strong>Enabled</strong>
+</div>
+
+</div>
+
+<button class="btn"
+onclick="showPage('home')">
+
+Back
+
+</button>
+
+</div>
+
+</div>
+
+<!-- SCRIPT -->
+
+<script>
+
+/* FIREBASE */
+
+const firebaseConfig = {
+databaseURL:
+"https://smart-cane-d4b70-default-rtdb.firebaseio.com/"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+/* MENU */
+
+function toggleMenu(){
+
+document.getElementById('drawer')
+.classList.toggle('open');
+
+}
+
+/* INIT */
+
+function initApp(){
+
+document.getElementById('gate')
+.classList.add('hidden');
+
+document.getElementById('main-content')
+.classList.remove('hidden');
+
+}
+
+/* PAGE */
+
+function showPage(page){
+
+['home','analysis',
+'medical','settings']
+
+.forEach(id => {
+
+document.getElementById(id+'-page')
+.classList.add('hidden');
+
+});
+
+document.getElementById(page+'-page')
+.classList.remove('hidden');
+
+toggleMenu();
+
+}
+
+/* REALTIME DATA */
+
+db.ref("/status")
+.on("value",(snapshot)=>{
+
+const data = snapshot.val();
+
+if(!data) return;
+
+const activity =
+data.current || "Standing";
+
+const sBox =
+document.getElementById("status-box");
+
+sBox.innerText = activity;
+
+document.getElementById("time")
+.innerText =
+new Date().toLocaleTimeString();
+
+/* STATUS */
+
+if(activity==="Tilted / Fallen"){
+
+sBox.className =
+"status-box bg-alert";
+
+}
+
+else if(activity==="Walking"){
+
+sBox.className =
+"status-box bg-walk";
+
+}
+
+else{
+
+sBox.className =
+"status-box bg-normal";
+
+}
+
+/* OBSTACLE */
+
+const obs =
+data.obstacle || "";
+
+if(obs.includes("Alert")){
+
+document.getElementById("obs-icon")
+.innerText="Obstacle ⛔";
+
+document.getElementById("obs-card")
+.classList.add("sensor-alert");
+
+}
+
+else{
+
+document.getElementById("obs-icon")
+.innerText="Safe";
+
+document.getElementById("obs-card")
+.classList.remove("sensor-alert");
+
+}
+
+/* WATER */
+
+const water =
+data.water || "";
+
+if(water.includes("Alert")){
+
+document.getElementById("water-icon")
+.innerText="Wet 💧";
+
+document.getElementById("water-card")
+.classList.add("sensor-alert");
+
+}
+
+else{
+
+document.getElementById("water-icon")
+.innerText="Dry";
+
+document.getElementById("water-card")
+.classList.remove("sensor-alert");
+
+}
+
+/* LIGHT */
+
+const light =
+data.light || "";
+
+if(light.includes("Alert")){
+
+document.getElementById("light-icon")
+.innerText="Dark 🌙";
+
+document.getElementById("light-card")
+.classList.add("sensor-alert");
+
+}
+
+else{
+
+document.getElementById("light-icon")
+.innerText="Bright ☀️";
+
+document.getElementById("light-card")
+.classList.remove("sensor-alert");
+
+}
+
+});
+
+/* CHART */
+
+const ctx =
+document.getElementById('myChart')
+.getContext('2d');
+
+new Chart(ctx,{
+
+type:'line',
+
+data:{
+
+labels:[
+'Mon','Tue','Wed',
+'Thu','Fri','Sat','Sun'
+],
+
+datasets:[{
+
+label:'Safety Alerts',
+
+data:[2,4,1,5,3,2,6],
+
+borderColor:'#ff3f6c',
+
+backgroundColor:
+'rgba(255,63,108,0.1)',
+
+fill:true,
+
+tension:0.4,
+
+borderWidth:3,
+
+pointRadius:5
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+legend:{
+display:true
+}
+},
+
+scales:{
+y:{
+beginAtZero:true
+}
+}
+
+}
+
+});
+
+/* QR */
+
+new QRCode(
+document.getElementById("qrcode"),
+{
+text:`
+Name: Mr. Raju
+Blood Group: B+
+Phone: +91 98765XXXX
+Emergency: +91 91234XXXX
+`,
+width:120,
+height:120
+}
+);
+
+</script>
+
+</body>
+</html>
